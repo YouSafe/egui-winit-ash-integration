@@ -593,10 +593,29 @@ impl App {
                 .color_attachments(&color_reference)
                 .depth_stencil_attachment(&depth_reference)
                 .build()];
+
+            let dependencies = [vk::SubpassDependency {
+                src_subpass: vk::SUBPASS_EXTERNAL,
+                dst_subpass: 0,
+                src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                src_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE,
+                dst_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE
+                    | vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
+                    | vk::AccessFlags::COLOR_ATTACHMENT_WRITE
+                    | vk::AccessFlags::COLOR_ATTACHMENT_READ,
+                dependency_flags: vk::DependencyFlags::empty(),
+            }];
+
             // create render pass
             let render_pass_create_info = vk::RenderPassCreateInfo::builder()
                 .attachments(&attachments)
-                .subpasses(&subpasses);
+                .subpasses(&subpasses)
+                .dependencies(&dependencies);
             unsafe { device.create_render_pass(&render_pass_create_info, None)? }
         };
 
@@ -1539,66 +1558,6 @@ impl App {
             self.device
                 .begin_command_buffer(command_buffer, &vk::CommandBufferBeginInfo::builder())?;
 
-            // Clear framebuffer
-            self.device.cmd_pipeline_barrier(
-                command_buffer,
-                vk::PipelineStageFlags::TRANSFER,
-                vk::PipelineStageFlags::TRANSFER,
-                vk::DependencyFlags::BY_REGION,
-                &[],
-                &[],
-                &[vk::ImageMemoryBarrier::builder()
-                    .src_access_mask(vk::AccessFlags::empty())
-                    .dst_access_mask(vk::AccessFlags::TRANSFER_WRITE)
-                    .old_layout(vk::ImageLayout::UNDEFINED)
-                    .new_layout(vk::ImageLayout::TRANSFER_DST_OPTIMAL)
-                    .image(self.swapchain_images[image_index])
-                    .subresource_range(
-                        vk::ImageSubresourceRange::builder()
-                            .aspect_mask(vk::ImageAspectFlags::COLOR)
-                            .layer_count(1)
-                            .level_count(1)
-                            .build(),
-                    )
-                    .build()],
-            );
-            self.device.cmd_clear_color_image(
-                command_buffer,
-                self.swapchain_images[image_index],
-                vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                &vk::ClearColorValue {
-                    float32: [0.0, 0.0, 0.0, 0.0],
-                },
-                &[vk::ImageSubresourceRange::builder()
-                    .aspect_mask(vk::ImageAspectFlags::COLOR)
-                    .layer_count(1)
-                    .level_count(1)
-                    .build()],
-            );
-            self.device.cmd_pipeline_barrier(
-                command_buffer,
-                vk::PipelineStageFlags::TRANSFER,
-                vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-                vk::DependencyFlags::BY_REGION,
-                &[],
-                &[],
-                &[vk::ImageMemoryBarrier::builder()
-                    .src_access_mask(vk::AccessFlags::TRANSFER_WRITE)
-                    .dst_access_mask(vk::AccessFlags::empty())
-                    .old_layout(vk::ImageLayout::TRANSFER_DST_OPTIMAL)
-                    .new_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-                    .image(self.swapchain_images[image_index])
-                    .src_queue_family_index(self.graphics_queue_index)
-                    .dst_queue_family_index(self.graphics_queue_index)
-                    .subresource_range(
-                        vk::ImageSubresourceRange::builder()
-                            .aspect_mask(vk::ImageAspectFlags::COLOR)
-                            .layer_count(1)
-                            .level_count(1)
-                            .build(),
-                    )
-                    .build()],
-            );
 
             // Draw Scene Texture
 

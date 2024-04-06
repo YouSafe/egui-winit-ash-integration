@@ -577,10 +577,28 @@ impl App {
                 .color_attachments(&color_reference)
                 .depth_stencil_attachment(&depth_reference)
                 .build()];
+
+            let dependencies = [vk::SubpassDependency {
+                src_subpass: vk::SUBPASS_EXTERNAL,
+                dst_subpass: 0,
+                src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                src_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE,
+                dst_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE
+                    | vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
+                    | vk::AccessFlags::COLOR_ATTACHMENT_WRITE
+                    | vk::AccessFlags::COLOR_ATTACHMENT_READ,
+                dependency_flags: vk::DependencyFlags::empty(),
+            }];
             // create render pass
             let render_pass_create_info = vk::RenderPassCreateInfo::builder()
                 .attachments(&attachments)
-                .subpasses(&subpasses);
+                .subpasses(&subpasses)
+                .dependencies(&dependencies);
             unsafe { device.create_render_pass(&render_pass_create_info, None)? }
         };
 
@@ -1624,10 +1642,29 @@ impl App {
                 .color_attachments(&color_reference)
                 .depth_stencil_attachment(&depth_reference)
                 .build()];
+
+            let dependencies = [vk::SubpassDependency {
+                src_subpass: vk::SUBPASS_EXTERNAL,
+                dst_subpass: 0,
+                src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+                    | vk::PipelineStageFlags::EARLY_FRAGMENT_TESTS
+                    | vk::PipelineStageFlags::LATE_FRAGMENT_TESTS,
+                src_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE,
+                dst_access_mask: vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE
+                    | vk::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
+                    | vk::AccessFlags::COLOR_ATTACHMENT_WRITE
+                    | vk::AccessFlags::COLOR_ATTACHMENT_READ,
+                dependency_flags: vk::DependencyFlags::empty(),
+            }];
+
             // render passの作成
             let render_pass_create_info = vk::RenderPassCreateInfo::builder()
                 .attachments(&attachments)
-                .subpasses(&subpasses);
+                .subpasses(&subpasses)
+                .dependencies(&dependencies);
             unsafe {
                 self.device
                     .create_render_pass(&render_pass_create_info, None)?
